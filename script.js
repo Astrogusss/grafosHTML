@@ -14,8 +14,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    uploadForm.addEventListener('submit', function(event) {
-        event.preventDefault(); // Impede o envio padrão do formulário
+    uploadForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
 
         const selectedPdf = pdfUploadInput.files[0];
         const selectedAreas = Array.from(checkboxes)
@@ -34,35 +34,40 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Exibindo as informações selecionadas (normalmente você enviaria isso para um servidor)
-        const pdfName = selectedPdf.name;
-        const areaName = selectedAreas[0]; // Já que apenas uma pode ser selecionada
+        const areaName = selectedAreas[0]; 
 
-        resultDiv.textContent = `PDF "${pdfName}" enviado com a área selecionada: "${areaName}".`;
-        resultDiv.style.color = 'green';
-
-        // Aqui você adicionaria o código para realmente fazer o upload do PDF e enviar a área selecionada
-        // Exemplo: Usando FormData e a API fetch
-        /*
         const formData = new FormData();
         formData.append('pdf', selectedPdf);
         formData.append('area', areaName);
 
-        fetch('/upload-endpoint', { // Substitua pelo seu endpoint de upload real
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Upload bem-sucedido:', data);
-            resultDiv.textContent = 'Upload realizado com sucesso!';
-            resultDiv.style.color = 'green';
-        })
-        .catch(error => {
-            console.error('Erro no upload:', error);
-            resultDiv.textContent = 'Erro ao fazer upload. Tente novamente.';
+      
+        const uploadUrl = '/api/upload-pdf/'; 
+
+        try {
+            resultDiv.textContent = 'Enviando PDF... Aguarde.';
+            resultDiv.style.color = 'orange';
+
+            const response = await fetch(uploadUrl, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                resultDiv.textContent = `Upload realizado com sucesso! PDF: "${data.pdf_name}", Área: "${data.area_selected}".`;
+                resultDiv.style.color = 'green';
+                console.log('Resposta do Django:', data);
+                uploadForm.reset();
+            } else {
+                const errorData = await response.json();
+                resultDiv.textContent = `Erro no upload: ${errorData.error || 'Erro desconhecido'}.`;
+                resultDiv.style.color = 'red';
+                console.error('Erro na resposta do Django:', errorData);
+            }
+        } catch (error) {
+            resultDiv.textContent = 'Ocorreu um erro de rede. Verifique sua conexão ou o servidor.';
             resultDiv.style.color = 'red';
-        });
-        */
+            console.error('Erro ao conectar com o backend:', error);
+        }
     });
 });
